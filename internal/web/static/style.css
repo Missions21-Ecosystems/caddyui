@@ -118,12 +118,14 @@ a:hover { text-decoration: underline; }
 
 /* ── Stat grid ──────────────────────────────────────────────── */
 .stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 20px;
 }
 .stat-box {
+  flex: 1 1 auto;
+  min-width: fit-content;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 8px;
