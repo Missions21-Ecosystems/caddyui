@@ -1,0 +1,24 @@
+# Secrets
+.env
+
+# Claude Code session data
+.claude/
+
+# Built binary
+/caddyui
+
+# Generated templ files (rebuilt by `make generate` or `make build`)
+templates/*_templ.go
+
+# Docker volumes written to the project directory at runtime
+caddy_data/
+caddy_config/
+
+# macOS
+.DS_Store
+
+# Editor directories
+.idea/
+.vscode/
+*.swp
+*.swo

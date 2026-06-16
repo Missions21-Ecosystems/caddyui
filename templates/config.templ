@@ -1,0 +1,50 @@
+package templates
+
+templ ConfigPage(streamID string) {
+	@Layout("Config Editor", "/config", streamID, "config") {
+		<div data-signals="{configjson: '', configpath: ''}">
+			<div class="toolbar">
+				<div class="toolbar-group">
+					<label class="label" for="config-path">Config Path</label>
+					<input
+						id="config-path"
+						class="input input--sm"
+						type="text"
+						placeholder="/apps/http"
+						data-bind:configpath
+					/>
+					<button class="btn btn-secondary btn-sm" data-on:click="@post('/api/config/get')">
+						Fetch
+					</button>
+				</div>
+				<div class="toolbar-group">
+					<button class="btn btn-primary btn-sm" data-on:click="@post('/api/config/load')">
+						Load to Caddy
+					</button>
+					<button
+						class="btn btn-secondary btn-sm"
+						data-on:click="$configjson = JSON.stringify(JSON.parse($configjson), null, 2)"
+					>
+						Format JSON
+					</button>
+				</div>
+			</div>
+			@Card("") {
+				<textarea
+					id="config-editor"
+					class="code-editor"
+					placeholder="{ }"
+					spellcheck="false"
+					data-bind:configjson
+				></textarea>
+			}
+			<div id="config-status"></div>
+		</div>
+	}
+}
+
+templ ConfigStatus(message, kind string) {
+	<div id="config-status">
+		<div class={ "alert", "alert--" + kind }>{ message }</div>
+	</div>
+}

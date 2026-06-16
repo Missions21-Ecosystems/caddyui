@@ -1,0 +1,57 @@
+package templates
+
+// Toast renders a notification toast. Type is "success", "error", or "info".
+templ Toast(message, kind string) {
+	<div id="toast" class={ "toast", "toast--" + kind, "toast--show" }>
+		{ message }
+	</div>
+}
+
+// ConnStatus renders the connection status badge in the topbar.
+templ ConnStatus(online bool) {
+	<div id="conn-status">
+		if online {
+			<span class="badge badge-success">● Connected</span>
+		} else {
+			<span class="badge badge-danger">● Unreachable</span>
+		}
+	</div>
+}
+
+// Card renders a titled content card.
+templ Card(title string) {
+	<section class="card">
+		if title != "" {
+			<div class="card-header">
+				<h2 class="card-title">{ title }</h2>
+			</div>
+		}
+		<div class="card-body">
+			{ children... }
+		</div>
+	</section>
+}
+
+// StatBox renders a single statistic box.
+templ StatBox(label, value, variant string) {
+	<div class={ "stat-box", templ.KV("stat-box--"+variant, variant != "") }>
+		<div class="stat-value">{ value }</div>
+		<div class="stat-label">{ label }</div>
+	</div>
+}
+
+// Spinner renders a loading spinner placeholder.
+templ Spinner() {
+	<div class="spinner-wrap">
+		<div class="spinner"></div>
+		<span class="spinner-label">Loading…</span>
+	</div>
+}
+
+// EmptyState renders an empty-state message.
+templ EmptyState(message string) {
+	<div class="empty-state">
+		<span class="empty-icon">○</span>
+		<p>{ message }</p>
+	</div>
+}

@@ -1,0 +1,148 @@
+package templates
+
+import (
+	"caddyui/internal/caddy"
+	"encoding/json"
+	"strings"
+)
+
+templ RoutesPage(streamID string) {
+	@Layout("Routes", "/routes", streamID, "routes") {
+		<div data-signals="{routejson: '', editserver: '', editrouteindex: ''}">
+			<div id="routes-content">
+				@Spinner()
+			</div>
+			<div id="route-editor-panel"></div>
+		</div>
+	}
+}
+
+templ RoutesContent(app caddy.HTTPApp) {
+	<div id="routes-content">
+		if len(app.Servers) == 0 {
+			@EmptyState("No HTTP servers found in the current Caddy config.")
+		} else {
+			for srvName, srv := range app.Servers {
+				@Card("Server: " + srvName + " — " + strings.Join(srv.Listen, ", ")) {
+					if len(srv.Routes) == 0 {
+						@EmptyState("No routes configured on this server.")
+					} else {
+						{{ routes := caddy.ParseRoutes(srv.Routes) }}
+						for i, rd := range routes {
+							<textarea id={ "rj-" + srvName + "-" + itoa(i) } hidden>{ routeJSONStr(srv.Routes[i]) }</textarea>
+							@routeCard(rd, srvName, i)
+						}
+					}
+				}
+			}
+		}
+		<div class="action-row">
+			<button class="btn btn-secondary" data-on:click="@post('/api/routes/refresh')">↺ Refresh</button>
+		</div>
+	</div>
+}
+
+templ routeCard(rd caddy.RouteDisplay, srvName string, idx int) {
+	<div class="route-card">
+		<div class="route-card-header">
+			<span class="route-num">Route { itoa(rd.Num) }</span>
+			<div class="route-card-actions">
+				if rd.Terminal {
+					<span class="badge badge-warning">Terminal</span>
+				}
+				<button
+					class="btn btn-ghost btn-xs"
+					data-on:click={ "($routejson=document.getElementById('rj-" + srvName + "-" + itoa(idx) + "').value)&&($editserver='" + srvName + "')&&($editrouteindex='" + itoa(idx) + "')&&@post('/api/routes/editor/open')" }
+				>Edit</button>
+				<button
+					class="btn btn-danger btn-xs"
+					data-on:click={ "confirm('Delete route " + itoa(rd.Num) + "?')&&($editserver='" + srvName + "')&&($editrouteindex='" + itoa(idx) + "')&&@post('/api/routes/delete')" }
+				>Delete</button>
+			</div>
+		</div>
+		<div class="route-card-body">
+			<div class="route-row">
+				<span class="route-label">MATCH</span>
+				<div class="match-chips">
+					for _, chip := range rd.Chips {
+						<span class={ "match-chip", "match-chip--" + chip.Kind }>{ chip.Text }</span>
+					}
+				</div>
+			</div>
+			<div class="route-row">
+				<span class="route-label">HANDLE</span>
+				<div class="handler-list">
+					for _, h := range rd.Handlers {
+						<div class="handler-line">
+							<span class="handler-kind">{ h.Kind }</span>
+							if h.Detail != "" {
+								<span class="handler-detail">{ h.Detail }</span>
+							}
+						</div>
+					}
+				</div>
+			</div>
+			if len(rd.SubRoutes) > 0 {
+				<div class="sub-routes">
+					for _, sub := range rd.SubRoutes {
+						@subRouteRow(sub)
+					}
+				</div>
+			}
+		</div>
+	</div>
+}
+
+templ subRouteRow(rd caddy.RouteDisplay) {
+	<div class="sub-route">
+		<div class="match-chips">
+			for _, chip := range rd.Chips {
+				<span class={ "match-chip", "match-chip--" + chip.Kind }>{ chip.Text }</span>
+			}
+		</div>
+		<span class="sub-route-arrow">→</span>
+		<div class="handler-list handler-list--inline">
+			for _, h := range rd.Handlers {
+				<span class="handler-kind">{ h.Kind }</span>
+				if h.Detail != "" {
+					<span class="handler-detail">{ h.Detail }</span>
+				}
+			}
+		</div>
+		if rd.Terminal {
+			<span class="badge badge-warning" style="font-size:10px;padding:2px 6px">terminal</span>
+		}
+	</div>
+}
+
+templ RouteEditorPanel() {
+	<div id="route-editor-panel" style="margin-top:20px">
+		@Card("Edit Route") {
+			<p class="meta" style="margin-bottom:12px">
+				Server: <code data-text="$editserver"></code>
+				&nbsp;·&nbsp; Route <span data-text="(parseInt($editrouteindex)+1)"></span>
+			</p>
+			<textarea
+				class="code-editor"
+				spellcheck="false"
+				data-bind:routejson
+			></textarea>
+			<div class="action-row" style="margin-top:12px">
+				<button class="btn btn-primary btn-sm" data-on:click="@post('/api/routes/save')">Save Changes</button>
+				<button class="btn btn-ghost btn-sm" data-on:click="@post('/api/routes/editor/close')">Cancel</button>
+			</div>
+		}
+	</div>
+}
+
+templ RouteEditorClosed() {
+	<div id="route-editor-panel"></div>
+}
+
+func routeJSONStr(r caddy.HTTPRoute) string {
+	b, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
+}

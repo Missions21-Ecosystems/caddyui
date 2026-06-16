@@ -1,0 +1,4 @@
+{
+    # Bind admin API to all interfaces so the caddyui container can reach it.
+    admin 0.0.0.0:2019
+}

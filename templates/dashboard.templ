@@ -1,0 +1,78 @@
+package templates
+
+import "caddyui/internal/caddy"
+
+templ DashboardPage(streamID string) {
+	@Layout("Dashboard", "/", streamID, "dashboard") {
+		<div id="dashboard-stats">
+			@Spinner()
+		</div>
+	}
+}
+
+templ DashboardStats(summary caddy.ConfigSummary, upstreams []caddy.Upstream, online bool) {
+	<div id="dashboard-stats">
+		<div class="stat-grid">
+			@StatBox("Apps Loaded", itoa(len(summary.Apps)), "")
+			@StatBox("HTTP Servers", itoa(summary.ServerCount), "")
+			@StatBox("Routes", itoa(summary.RouteCount), "")
+			@StatBox("Admin Listen", adminListen(summary.AdminListen), "")
+		</div>
+		@Card("Reverse Proxy Upstreams") {
+			if len(upstreams) == 0 {
+				@EmptyState("No upstreams configured or reverse_proxy module not active.")
+			} else {
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Address</th>
+							<th>Active Requests</th>
+							<th>Fails</th>
+							<th>Health</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, u := range upstreams {
+							<tr>
+								<td><code>{ u.Address }</code></td>
+								<td>{ itoa(u.NumRequests) }</td>
+								<td>{ itoa(u.Fails) }</td>
+								<td>
+									if u.Fails == 0 {
+										<span class="badge badge-success">Healthy</span>
+									} else {
+										<span class="badge badge-danger">Failing</span>
+									}
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
+		}
+		<div class="action-row">
+			<button class="btn btn-secondary" data-on:click="@post('/api/dashboard/refresh')">
+				↺ Refresh
+			</button>
+		</div>
+	</div>
+}
+
+func itoa(n int) string {
+	if n == 0 {
+		return "0"
+	}
+	s := ""
+	for n > 0 {
+		s = string(rune('0'+n%10)) + s
+		n /= 10
+	}
+	return s
+}
+
+func adminListen(s string) string {
+	if s == "" {
+		return "localhost:2019"
+	}
+	return s
+}

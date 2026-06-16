@@ -1,0 +1,333 @@
+package templates
+
+// caddySnippet holds a named Caddyfile template for the snippet library.
+type caddySnippet struct {
+	ID      string
+	Label   string
+	Desc    string
+	Content string
+}
+
+const globalOptionsExample = `{
+	email admin@example.com
+	acme_ca https://acme-v02.api.letsencrypt.org/directory
+	servers {
+		trusted_proxies static private_ranges
+	}
+}`
+
+const reverseProxyOptionsExample = `reverse_proxy node1:80 node2:80 {
+	lb_policy round_robin
+	health_uri /healthz
+	health_interval 30s
+	header_up Host {upstream_hostport}
+	transport http {
+		dial_timeout 2s
+		tls_insecure_skip_verify
+	}
+}`
+
+// directiveRows and matcherRows hold reference table data to avoid templ
+// misinterpreting {path} as a Go expression or @name as a component call.
+var directiveRows = [][2]string{
+	{"reverse_proxy", "Proxy to upstream(s)"},
+	{"file_server", "Serve static files from root"},
+	{"root * /path", "Set site root directory"},
+	{"encode gzip", "Compress responses"},
+	{"tls internal", "Self-signed cert via local CA"},
+	{"tls off", "Disable HTTPS (plain HTTP)"},
+	{"redir /old /new", "HTTP redirect"},
+	{"rewrite /old /new", "Internal URL rewrite"},
+	{"try_files {path} /index.html", "Fallback for SPA routing"},
+	{"php_fastcgi host:port", "PHP via FastCGI"},
+	{"header X-Name value", "Set response header"},
+	{`respond "text" 200`, "Send hard-coded response"},
+	{"abort", "Close connection immediately"},
+	{"log", "Enable access logging"},
+	{"basic_auth", "Require HTTP Basic Auth"},
+}
+
+var matcherRows = [][2]string{
+	{"@name path /api/*", "Named matcher (path)"},
+	{"@name host sub.example.com", "Named matcher (host)"},
+	{"@name method POST PUT", "Named matcher (method)"},
+	{"@name header X-Key value", "Named matcher (header)"},
+	{"@name not path /public/*", "Negated matcher"},
+	{"handle @name { }", "Apply directives to matcher"},
+	{"handle_path /prefix/* { }", "Match + strip path prefix"},
+}
+
+var snippets = []caddySnippet{
+	{
+		ID:    "tpl-rp",
+		Label: "Reverse Proxy",
+		Desc:  "Forward traffic to a backend",
+		Content: `example.com {
+	reverse_proxy localhost:3000
+}`,
+	},
+	{
+		ID:    "tpl-https-local",
+		Label: "HTTPS Local",
+		Desc:  "TLS via internal CA (Docker/dev)",
+		Content: `localhost {
+	tls internal
+	reverse_proxy host.docker.internal:8080
+}`,
+	},
+	{
+		ID:    "tpl-static",
+		Label: "Static Files",
+		Desc:  "Serve files from disk",
+		Content: `example.com {
+	root * /var/www
+	file_server
+}`,
+	},
+	{
+		ID:    "tpl-spa",
+		Label: "Single-Page App",
+		Desc:  "SPA with HTML5 pushState fallback",
+		Content: `example.com {
+	root * /srv
+	encode gzip
+	try_files {path} /index.html
+	file_server
+}`,
+	},
+	{
+		ID:    "tpl-spa-api",
+		Label: "SPA + API",
+		Desc:  "Frontend + separate API backend",
+		Content: `example.com {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy api-server:8000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}`,
+	},
+	{
+		ID:    "tpl-lb",
+		Label: "Load Balanced",
+		Desc:  "Multiple upstreams with health checks",
+		Content: `example.com {
+	reverse_proxy node1:8080 node2:8080 node3:8080 {
+		lb_policy round_robin
+		health_uri /healthz
+		health_interval 30s
+	}
+}`,
+	},
+	{
+		ID:    "tpl-php",
+		Label: "PHP / FastCGI",
+		Desc:  "PHP app via FastCGI",
+		Content: `example.com {
+	root * /srv/public
+	encode gzip
+	php_fastcgi localhost:9000
+	file_server
+}`,
+	},
+	{
+		ID:    "tpl-redirect",
+		Label: "www → root",
+		Desc:  "Redirect www subdomain to apex",
+		Content: `www.example.com {
+	redir https://example.com{uri} permanent
+}
+
+example.com {
+	reverse_proxy localhost:3000
+}`,
+	},
+	{
+		ID:    "tpl-path",
+		Label: "Path Routing",
+		Desc:  "Different paths to different backends",
+		Content: `example.com {
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle /static/* {
+		root * /var/www
+		file_server
+	}
+
+	handle {
+		respond "Not found" 404
+	}
+}`,
+	},
+	{
+		ID:    "tpl-wildcard",
+		Label: "Wildcard Subdomains",
+		Desc:  "Route *.example.com to separate backends",
+		Content: `*.example.com {
+	tls {
+		dns <provider> [<params>]
+	}
+
+	@app host app.example.com
+	handle @app {
+		reverse_proxy app-server:3000
+	}
+
+	@api host api.example.com
+	handle @api {
+		reverse_proxy api-server:8080
+	}
+
+	handle {
+		abort
+	}
+}`,
+	},
+}
+
+templ AdaptPage(streamID string) {
+	@Layout("Adapt Config", "/adapt", streamID, "adapt") {
+		<div data-signals="{caddyfile: '', configjson: ''}">
+			<!-- Hidden content for each snippet so JS can read .textContent safely -->
+			for _, s := range snippets {
+				<pre id={ s.ID } hidden>{ s.Content }</pre>
+			}
+
+			<!-- Snippet library -->
+			<div class="snippet-grid" style="margin-bottom:16px">
+				for _, s := range snippets {
+					<button
+						class="snippet-btn"
+						data-on:click={ "document.getElementById('" + s.ID + "') && ($caddyfile = document.getElementById('" + s.ID + "').textContent.trim())" }
+						title={ s.Desc }
+					>
+						<span class="snippet-label">{ s.Label }</span>
+						<span class="snippet-desc">{ s.Desc }</span>
+					</button>
+				}
+			</div>
+
+			<!-- Main two-column editor -->
+			<div class="two-col">
+				<div class="col">
+					@Card("Input (Caddyfile)") {
+						<div class="toolbar toolbar--sm">
+							<button
+								class="btn btn-ghost btn-sm"
+								data-on:click="$caddyfile = ''"
+								title="Clear editor"
+							>✕ Clear</button>
+						</div>
+						<textarea
+							id="caddyfile-input"
+							class="code-editor code-editor--tall"
+							placeholder="# Pick a template above or write your Caddyfile here&#10;example.com {&#10;&#9;reverse_proxy localhost:8080&#10;}"
+							spellcheck="false"
+							data-bind:caddyfile
+						></textarea>
+						<div class="toolbar toolbar--sm" style="margin-top:8px">
+							<button
+								class="btn btn-primary btn-sm"
+								data-on:click="@post('/api/adapt')"
+							>
+								Convert to JSON →
+							</button>
+						</div>
+					}
+				</div>
+				<div class="col">
+					<div id="adapt-output">
+						@Card("Output (Caddy JSON)") {
+							<div class="empty-state">
+								<p>Converted JSON will appear here.</p>
+							</div>
+						}
+					</div>
+					<div id="adapt-actions"></div>
+				</div>
+			</div>
+
+			<!-- Quick Reference -->
+			<details class="reference-details" style="margin-top:20px">
+				<summary class="reference-summary">Quick Reference</summary>
+				<div class="reference-body">
+					<div class="two-col" style="gap:16px">
+						<div>
+							<h3 class="ref-heading">Common Directives</h3>
+							<table class="table table--compact">
+								<tbody>
+									for _, row := range directiveRows {
+										<tr><td><code>{ row[0] }</code></td><td>{ row[1] }</td></tr>
+									}
+								</tbody>
+							</table>
+						</div>
+						<div>
+							<h3 class="ref-heading">Matchers</h3>
+							<table class="table table--compact">
+								<tbody>
+									for _, row := range matcherRows {
+										<tr><td><code>{ row[0] }</code></td><td>{ row[1] }</td></tr>
+									}
+								</tbody>
+							</table>
+							<h3 class="ref-heading" style="margin-top:16px">Global Options Block</h3>
+							<pre class="code-snippet">{ globalOptionsExample }</pre>
+							<h3 class="ref-heading" style="margin-top:16px">reverse_proxy Options</h3>
+							<pre class="code-snippet">{ reverseProxyOptionsExample }</pre>
+						</div>
+					</div>
+				</div>
+			</details>
+		</div>
+	}
+}
+
+templ AdaptOutput(jsonStr string, warnings []string) {
+	<div id="adapt-output">
+		@Card("Output (Caddy JSON)") {
+			if len(warnings) > 0 {
+				<div class="alert alert--warn" style="margin-bottom:8px">
+					for _, w := range warnings {
+						<div>⚠ { w }</div>
+					}
+				</div>
+			}
+			<div class="toolbar toolbar--sm" style="margin-bottom:6px">
+				<button
+					class="btn btn-ghost btn-sm"
+					data-on:click="navigator.clipboard.writeText(document.getElementById('adapt-json-out').value)"
+				>⎘ Copy</button>
+			</div>
+			<textarea id="adapt-json-out" class="code-editor code-editor--tall" readonly spellcheck="false">{ jsonStr }</textarea>
+		}
+	</div>
+}
+
+templ AdaptActions() {
+	<div id="adapt-actions" style="margin-top:8px">
+		<button class="btn btn-secondary btn-sm" data-on:click="@post('/api/config/load')">
+			Load this config into Caddy
+		</button>
+	</div>
+}
+
+templ AdaptErrorOutput(msg string) {
+	<div id="adapt-output">
+		@Card("Output (Caddy JSON)") {
+			<div class="alert alert--error">{ msg }</div>
+		}
+	</div>
+}
+
+templ AdaptErrorActions() {
+	<div id="adapt-actions"></div>
+}

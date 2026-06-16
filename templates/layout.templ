@@ -1,0 +1,77 @@
+package templates
+
+type navItem struct {
+	Label string
+	Path  string
+	Icon  string
+}
+
+// Layout wraps every page. streamID + page are placed on .app so the long-lived
+// SSE stream (and the stop-server button) can access $streamId from any child.
+templ Layout(title, activePath, streamID, page string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title } — Caddy UI</title>
+			<link rel="stylesheet" href="/static/style.css"/>
+			<script type="module" src="/static/datastar.js"></script>
+		</head>
+		<body>
+			<div
+				class="app"
+				data-signals={ `{"streamid":"` + streamID + `","page":"` + page + `"}` }
+				data-init="@get('/sse/stream')"
+			>
+				@sidebar(activePath)
+				<div class="main">
+					<header class="topbar">
+						<h1 class="page-title">{ title }</h1>
+						<div id="conn-status" data-init="@get('/sse/ping')">
+							<span class="badge badge-neutral">Checking…</span>
+						</div>
+					</header>
+					<main class="content">
+						{ children... }
+					</main>
+				</div>
+			</div>
+			<div id="toast" class="toast"></div>
+		</body>
+	</html>
+}
+
+templ sidebar(activePath string) {
+	{{ items := []navItem{
+		{Label: "Dashboard", Path: "/", Icon: "⊞"},
+		{Label: "Config", Path: "/config", Icon: "{}"},
+		{Label: "Routes", Path: "/routes", Icon: "⇌"},
+		{Label: "Reverse Proxy", Path: "/proxy", Icon: "↔"},
+		{Label: "PKI / TLS", Path: "/pki", Icon: "🔒"},
+		{Label: "Config Builder", Path: "/adapt", Icon: "⇄"},
+	} }}
+	<aside class="sidebar">
+		<div class="sidebar-brand">
+			<span class="brand-icon">⚙</span>
+			<span class="brand-name">Caddy UI</span>
+		</div>
+		<nav class="sidebar-nav">
+			for _, item := range items {
+				<a
+					href={ templ.SafeURL(item.Path) }
+					class={ "nav-link", templ.KV("nav-link--active", item.Path == activePath) }
+				>
+					<span class="nav-icon">{ item.Icon }</span>
+					<span>{ item.Label }</span>
+				</a>
+			}
+		</nav>
+		<div class="sidebar-footer">
+			<button
+				class="btn btn-danger btn-sm btn-block"
+				data-on:click="confirm('Stop Caddy server? This will terminate the process.') && @post('/api/server/stop')"
+			>Stop Server</button>
+		</div>
+	</aside>
+}

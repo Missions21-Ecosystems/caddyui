@@ -1,0 +1,43 @@
+services:
+  caddyui:
+    build: .
+    ports:
+      - "${LISTEN_ADDR:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      - CADDY_ADMIN_URL=http://caddy:2019
+      - LISTEN_ADDR=:8080
+      - UI_USERNAME=${UI_USERNAME:-admin}
+      - UI_PASSWORD=${UI_PASSWORD:-changeme}
+    restart: unless-stopped
+    # join a custom network shared with your Caddy container:
+    networks:
+      - caddy_net
+    depends_on:
+      - caddy
+
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+      - "2019:2019"
+    volumes:
+      - ./conf:/etc/caddy
+      - ./site:/srv
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - caddy_net
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  caddy_net:

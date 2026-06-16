@@ -1,0 +1,51 @@
+package templates
+
+import "caddyui/internal/caddy"
+
+templ ProxyPage(streamID string) {
+	@Layout("Reverse Proxy", "/proxy", streamID, "proxy") {
+		<div id="proxy-content">
+			@Spinner()
+		</div>
+	}
+}
+
+templ ProxyContent(upstreams []caddy.Upstream) {
+	<div id="proxy-content">
+		@Card("Upstream Status") {
+			if len(upstreams) == 0 {
+				@EmptyState("No reverse proxy upstreams found. Configure reverse_proxy in Caddy to see upstream health here.")
+			} else {
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Address</th>
+							<th>Active Requests</th>
+							<th>Cumulative Fails</th>
+							<th>Health</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, u := range upstreams {
+							<tr>
+								<td><code>{ u.Address }</code></td>
+								<td>{ itoa(u.NumRequests) }</td>
+								<td>{ itoa(u.Fails) }</td>
+								<td>
+									if u.Fails == 0 {
+										<span class="badge badge-success">● Healthy</span>
+									} else {
+										<span class="badge badge-danger">● Failing</span>
+									}
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
+		}
+		<div class="action-row">
+			<button class="btn btn-secondary" data-on:click="@post('/api/proxy/refresh')">↺ Refresh</button>
+		</div>
+	</div>
+}

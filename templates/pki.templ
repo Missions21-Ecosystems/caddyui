@@ -1,0 +1,70 @@
+package templates
+
+import "caddyui/internal/caddy"
+
+templ PKIPage(streamID string) {
+	@Layout("PKI / TLS", "/pki", streamID, "pki") {
+		<div data-signals="{caid: 'local'}">
+			<div class="toolbar">
+				<div class="toolbar-group">
+					<label class="label" for="ca-id">CA ID</label>
+					<input
+						id="ca-id"
+						class="input input--sm"
+						type="text"
+						placeholder="local"
+						data-bind:caid
+					/>
+					<button class="btn btn-secondary btn-sm" data-on:click="@post('/api/pki/ca')">
+						Fetch CA
+					</button>
+					<button class="btn btn-secondary btn-sm" data-on:click="@post('/api/pki/certs')">
+						Fetch Certs
+					</button>
+				</div>
+			</div>
+			<div id="pki-content">
+				<p class="hint">Enter a CA ID and click Fetch CA to view info, or Fetch Certs for the certificate chain.</p>
+			</div>
+		</div>
+	}
+}
+
+templ PKICAContent(info *caddy.PKICAInfo) {
+	<div id="pki-content">
+		@Card("CA: " + info.Name) {
+			<dl class="description-list">
+				<dt>ID</dt>
+				<dd><code>{ info.ID }</code></dd>
+				<dt>Name</dt>
+				<dd>{ info.Name }</dd>
+			</dl>
+			if info.RootCertificate != "" {
+				<div class="cert-block">
+					<h3 class="cert-title">Root Certificate</h3>
+					<pre class="cert-pem">{ info.RootCertificate }</pre>
+				</div>
+			}
+			if info.IntermediateCertificate != "" {
+				<div class="cert-block">
+					<h3 class="cert-title">Intermediate Certificate</h3>
+					<pre class="cert-pem">{ info.IntermediateCertificate }</pre>
+				</div>
+			}
+		}
+	</div>
+}
+
+templ PKICertsContent(raw string) {
+	<div id="pki-content">
+		@Card("Certificate Chain") {
+			<pre class="cert-pem">{ raw }</pre>
+		}
+	</div>
+}
+
+templ PKIError(msg string) {
+	<div id="pki-content">
+		<div class="alert alert--error">{ msg }</div>
+	</div>
+}
