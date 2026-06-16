@@ -11,6 +11,34 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
+func (h *Handler) AdaptMergeAction(w http.ResponseWriter, r *http.Request) {
+	var signals struct {
+		StreamID   string `json:"streamid"`
+		ConfigJSON string `json:"configjson"`
+	}
+	datastar.ReadSignals(r, &signals)
+
+	var pushFn stream.PushFn
+	if signals.ConfigJSON == "" {
+		pushFn = func(sse *datastar.ServerSentEventGenerator) {
+			sse.PatchElementTempl(templates.Toast("Nothing to merge — convert a Caddyfile first.", "error"))
+		}
+	} else {
+		err := h.caddy.MergeConfig([]byte(signals.ConfigJSON))
+		if err != nil {
+			pushFn = func(sse *datastar.ServerSentEventGenerator) {
+				sse.PatchElementTempl(templates.Toast("Merge failed: "+err.Error(), "error"))
+			}
+		} else {
+			pushFn = func(sse *datastar.ServerSentEventGenerator) {
+				sse.PatchElementTempl(templates.Toast("Config merged successfully.", "success"))
+			}
+		}
+	}
+	h.streams.Push(signals.StreamID, pushFn)
+	datastar.NewSSE(w, r)
+}
+
 func (h *Handler) AdaptPage(w http.ResponseWriter, r *http.Request) {
 	templates.AdaptPage(stream.NewID()).Render(r.Context(), w)
 }

@@ -207,6 +207,85 @@ func (c *Client) GetPKICACerts(id string) (json.RawMessage, error) {
 	return json.RawMessage(body), nil
 }
 
+// MergeConfig merges the HTTP servers from incoming into the current running
+// config and calls LoadConfig with the result. For each server in incoming:
+//   - If the server name already exists, its routes are appended.
+//   - If it is a new name, the whole server is added.
+//
+// Everything else in the current config (admin, tls, other apps) is preserved.
+func (c *Client) MergeConfig(incoming json.RawMessage) error {
+	current, err := c.GetConfig("")
+	if err != nil {
+		return fmt.Errorf("fetch current config: %w", err)
+	}
+
+	merged, err := mergeHTTPServers(current, incoming)
+	if err != nil {
+		return fmt.Errorf("merge: %w", err)
+	}
+	return c.LoadConfig(merged)
+}
+
+func mergeHTTPServers(current, incoming json.RawMessage) (json.RawMessage, error) {
+	var cur map[string]json.RawMessage
+	if err := json.Unmarshal(current, &cur); err != nil {
+		return nil, err
+	}
+
+	// Extract incoming http app.
+	var incFull map[string]json.RawMessage
+	if err := json.Unmarshal(incoming, &incFull); err != nil {
+		return nil, err
+	}
+	incAppsRaw, ok := incFull["apps"]
+	if !ok {
+		return current, nil // nothing to merge
+	}
+	var incApps map[string]json.RawMessage
+	json.Unmarshal(incAppsRaw, &incApps)
+	incHTTPRaw, ok := incApps["http"]
+	if !ok {
+		return current, nil
+	}
+	var incHTTP HTTPApp
+	json.Unmarshal(incHTTPRaw, &incHTTP)
+
+	// Extract current http app (may not exist yet).
+	curApps := map[string]json.RawMessage{}
+	if raw, ok := cur["apps"]; ok {
+		json.Unmarshal(raw, &curApps)
+	}
+	var curHTTP HTTPApp
+	if raw, ok := curApps["http"]; ok {
+		json.Unmarshal(raw, &curHTTP)
+	}
+	if curHTTP.Servers == nil {
+		curHTTP.Servers = map[string]HTTPServer{}
+	}
+
+	// Merge servers.
+	for name, incSrv := range incHTTP.Servers {
+		if curSrv, exists := curHTTP.Servers[name]; exists {
+			curSrv.Routes = append(curSrv.Routes, incSrv.Routes...)
+			curHTTP.Servers[name] = curSrv
+		} else {
+			curHTTP.Servers[name] = incSrv
+		}
+	}
+
+	httpRaw, err := json.Marshal(curHTTP)
+	if err != nil {
+		return nil, err
+	}
+	curApps["http"] = httpRaw
+	appsRaw, err := json.Marshal(curApps)
+	if err != nil {
+		return nil, err
+	}
+	cur["apps"] = appsRaw
+	return json.Marshal(cur)
+}
+
 // doJSON sends a JSON body with the given method and handles the response.
 func (c *Client) doJSON(method, url string, body json.RawMessage) error {
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))

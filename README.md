@@ -80,9 +80,14 @@ app.example.com {
 ### Step 2 — Convert and load
 
 1. Click **Convert to JSON →** — the equivalent Caddy JSON appears on the right.
-2. Click **Load this config into Caddy** to apply it immediately. No restart needed.
+2. Choose how to apply it:
 
-> **Important:** Loading a config **replaces the entire running config**. To run multiple sites, include all of them in one Caddyfile and convert together. To add a site to an existing setup, fetch the current JSON from the **Config** page first, add your new route there, and load the combined JSON.
+| Button | Behaviour |
+|---|---|
+| **Load (replace all)** | Replaces the entire running config with the converted JSON |
+| **Merge into existing** | Appends new servers/routes onto the current config without removing anything |
+
+> **Merge behaviour:** if the adapted config produces a server with the same name as an existing one (Caddy typically calls them `srv0`, `srv1`, etc.), its routes are **appended** rather than replaced. Use the **Routes** page to remove duplicates if needed.
 
 ### Step 3 — Verify
 
@@ -113,7 +118,7 @@ In **Config Builder**, paste:
 
 ### Step 3 — Convert and load
 
-Click **Convert to JSON →** then **Load this config into Caddy**.
+Click **Convert to JSON →** then **Load (replace all)** or **Merge into existing**.
 
 Your files are now live at **http://localhost**.
 
@@ -134,7 +139,7 @@ Your files are now live at **http://localhost**.
 }
 ```
 
-Paste in **Config Builder**, convert, and load. Routes are matched top to bottom.
+Paste in **Config Builder**, convert, and load. Routes are matched top to bottom within each server block.
 
 ---
 

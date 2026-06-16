@@ -72,6 +72,7 @@ templ sidebar(activePath string) {
 				class="btn btn-danger btn-sm btn-block"
 				data-on:click="confirm('Stop Caddy server? This will terminate the process.') && @post('/api/server/stop')"
 			>Stop Server</button>
+			<a href="/logout" class="btn btn-ghost btn-sm btn-block" style="margin-top:6px">Log out</a>
 		</div>
 	</aside>
 }
