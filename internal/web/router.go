@@ -68,6 +68,7 @@ func NewRouter(caddyClient *caddy.Client, username, password, bp string) http.Ha
 		r.Post("/api/routes/delete", h.RouteDeleteAction)
 		r.Post("/api/routes/save", h.RouteSaveAction)
 		r.Post("/api/server/stop", h.ServerStopAction)
+		r.Post("/api/config/caddyfile", h.ConfigToCaddyfileAction)
 	})
 
 	return r

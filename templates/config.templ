@@ -27,6 +27,9 @@ templ ConfigPage(streamID string) {
 					>
 						Format JSON
 					</button>
+					<button class="btn btn-ghost btn-sm" data-on:click={ "@post('" + bp(ctx) + "/api/config/caddyfile')" }>
+						→ Caddyfile
+					</button>
 				</div>
 			</div>
 			@Card("") {
@@ -39,6 +42,7 @@ templ ConfigPage(streamID string) {
 				></textarea>
 			}
 			<div id="config-status"></div>
+			<div id="caddyfile-output"></div>
 		</div>
 	}
 }
@@ -46,5 +50,19 @@ templ ConfigPage(streamID string) {
 templ ConfigStatus(message, kind string) {
 	<div id="config-status">
 		<div class={ "alert", "alert--" + kind }>{ message }</div>
+	</div>
+}
+
+templ CaddyfileOutput(src string) {
+	<div id="caddyfile-output" style="margin-top:16px">
+		@Card("Caddyfile") {
+			<div class="toolbar toolbar--sm" style="margin-bottom:6px">
+				<button
+					class="btn btn-ghost btn-sm"
+					data-on:click="navigator.clipboard.writeText(document.getElementById('caddyfile-out').value)"
+				>⎘ Copy</button>
+			</div>
+			<textarea id="caddyfile-out" class="code-editor code-editor--tall" readonly spellcheck="false">{ src }</textarea>
+		}
 	</div>
 }

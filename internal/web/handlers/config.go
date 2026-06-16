@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"caddyui/internal/caddyfile"
 	"caddyui/internal/stream"
 	"caddyui/templates"
 	"encoding/json"
@@ -65,6 +66,39 @@ func (h *Handler) ConfigLoadAction(w http.ResponseWriter, r *http.Request) {
 			pushFn = func(sse *datastar.ServerSentEventGenerator) {
 				sse.PatchElementTempl(templates.ConfigStatus("Config loaded successfully.", "success"))
 				sse.PatchElementTempl(templates.ConnStatus(true))
+			}
+		}
+	}
+	h.streams.Push(signals.StreamID, pushFn)
+	datastar.NewSSE(w, r)
+}
+
+func (h *Handler) ConfigToCaddyfileAction(w http.ResponseWriter, r *http.Request) {
+	var signals struct {
+		StreamID   string `json:"streamid"`
+		ConfigJson string `json:"configjson"`
+	}
+	datastar.ReadSignals(r, &signals)
+
+	var pushFn stream.PushFn
+	switch {
+	case signals.ConfigJson == "":
+		pushFn = func(sse *datastar.ServerSentEventGenerator) {
+			sse.PatchElementTempl(templates.ConfigStatus("Config is empty — nothing to convert.", "error"))
+		}
+	case !json.Valid(json.RawMessage(signals.ConfigJson)):
+		pushFn = func(sse *datastar.ServerSentEventGenerator) {
+			sse.PatchElementTempl(templates.ConfigStatus("Invalid JSON — fix syntax errors first.", "error"))
+		}
+	default:
+		result, err := caddyfile.FromJSON(json.RawMessage(signals.ConfigJson))
+		if err != nil {
+			pushFn = func(sse *datastar.ServerSentEventGenerator) {
+				sse.PatchElementTempl(templates.ConfigStatus("Conversion failed: "+err.Error(), "error"))
+			}
+		} else {
+			pushFn = func(sse *datastar.ServerSentEventGenerator) {
+				sse.PatchElementTempl(templates.CaddyfileOutput(result))
 			}
 		}
 	}
