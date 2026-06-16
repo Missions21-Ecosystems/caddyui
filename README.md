@@ -82,6 +82,8 @@ app.example.com {
 1. Click **Convert to JSON →** — the equivalent Caddy JSON appears on the right.
 2. Click **Load this config into Caddy** to apply it immediately. No restart needed.
 
+> **Important:** Loading a config **replaces the entire running config**. To run multiple sites, include all of them in one Caddyfile and convert together. To add a site to an existing setup, fetch the current JSON from the **Config** page first, add your new route there, and load the combined JSON.
+
 ### Step 3 — Verify
 
 Go to **Dashboard** → the reverse proxy upstream will appear in the **Upstream Status** table. Go to **Routes** to see the configured server and route, and edit or delete routes directly from there.
