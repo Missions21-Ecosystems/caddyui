@@ -1,8 +1,33 @@
-# Caddy UI
+<p align="center">
+  <img src="internal/web/static/logo.png" alt="CaddyUI" width="320"/>
+</p>
 
-A lightweight web interface for the [Caddy](https://caddyserver.com) REST admin API. Configure sites, reverse proxies, TLS, and more — no Caddyfile editing required.
+<p align="center">
+  A lightweight web interface for the <a href="https://caddyserver.com">Caddy</a> REST admin API.<br/>
+  Configure sites, reverse proxies, TLS, and more — no Caddyfile editing required.
+</p>
 
-Built with Go, [templ](https://templ.guide), and [Data-Star](https://data-star.dev).
+<p align="center">
+  Built with Go, <a href="https://templ.guide">templ</a>, and <a href="https://data-star.dev">Data-Star</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Missions21-Ecosystems/caddyui">GitHub</a>
+</p>
+
+---
+
+## Screenshots
+
+| Dashboard | Config |
+|---|---|
+| ![Dashboard](screenshots/Dashboard.png) | ![Config](screenshots/Config.png) |
+
+| Routes | Reverse Proxy |
+|---|---|
+| ![Routes](screenshots/Routes.png) | ![Reverse Proxy](screenshots/ReverseProxy.png) |
+
+| PKI / TLS | Config Builder |
+|---|---|
+| ![PKI / TLS](screenshots/PKI-TLS.png) | ![Config Builder](screenshots/ConfigBuilder.png) |
 
 ---
 
