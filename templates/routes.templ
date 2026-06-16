@@ -37,7 +37,7 @@ templ RoutesContent(app caddy.HTTPApp) {
 			}
 		}
 		<div class="action-row">
-			<button class="btn btn-secondary" data-on:click="@post('/api/routes/refresh')">↺ Refresh</button>
+			<button class="btn btn-secondary" data-on:click={ "@post('" + bp(ctx) + "/api/routes/refresh')" }>↺ Refresh</button>
 		</div>
 	</div>
 }
@@ -52,11 +52,11 @@ templ routeCard(rd caddy.RouteDisplay, srvName string, idx int) {
 				}
 				<button
 					class="btn btn-ghost btn-xs"
-					data-on:click={ "($routejson=document.getElementById('rj-" + srvName + "-" + itoa(idx) + "').value)&&($editserver='" + srvName + "')&&($editrouteindex='" + itoa(idx) + "')&&@post('/api/routes/editor/open')" }
+					data-on:click={ "($routejson=document.getElementById('rj-" + srvName + "-" + itoa(idx) + "').value)&&($editserver='" + srvName + "')&&($editrouteindex='" + itoa(idx) + "')&&@post('" + bp(ctx) + "/api/routes/editor/open')" }
 				>Edit</button>
 				<button
 					class="btn btn-danger btn-xs"
-					data-on:click={ "confirm('Delete route " + itoa(rd.Num) + "?')&&($editserver='" + srvName + "')&&($editrouteindex='" + itoa(idx) + "')&&@post('/api/routes/delete')" }
+					data-on:click={ "confirm('Delete route " + itoa(rd.Num) + "?')&&($editserver='" + srvName + "')&&($editrouteindex='" + itoa(idx) + "')&&@post('" + bp(ctx) + "/api/routes/delete')" }
 				>Delete</button>
 			</div>
 		</div>
@@ -128,8 +128,8 @@ templ RouteEditorPanel() {
 				data-bind:routejson
 			></textarea>
 			<div class="action-row" style="margin-top:12px">
-				<button class="btn btn-primary btn-sm" data-on:click="@post('/api/routes/save')">Save Changes</button>
-				<button class="btn btn-ghost btn-sm" data-on:click="@post('/api/routes/editor/close')">Cancel</button>
+				<button class="btn btn-primary btn-sm" data-on:click={ "@post('" + bp(ctx) + "/api/routes/save')" }>Save Changes</button>
+				<button class="btn btn-ghost btn-sm" data-on:click={ "@post('" + bp(ctx) + "/api/routes/editor/close')" }>Cancel</button>
 			</div>
 		}
 	</div>

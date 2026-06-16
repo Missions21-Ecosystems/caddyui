@@ -15,10 +15,10 @@ templ PKIPage(streamID string) {
 						placeholder="local"
 						data-bind:caid
 					/>
-					<button class="btn btn-secondary btn-sm" data-on:click="@post('/api/pki/ca')">
+					<button class="btn btn-secondary btn-sm" data-on:click={ "@post('" + bp(ctx) + "/api/pki/ca')" }>
 						Fetch CA
 					</button>
-					<button class="btn btn-secondary btn-sm" data-on:click="@post('/api/pki/certs')">
+					<button class="btn btn-secondary btn-sm" data-on:click={ "@post('" + bp(ctx) + "/api/pki/certs')" }>
 						Fetch Certs
 					</button>
 				</div>

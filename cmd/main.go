@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -19,10 +20,14 @@ func main() {
 	listenAddr := getenv("LISTEN_ADDR", ":8080")
 	username := getenv("UI_USERNAME", "admin")
 	password := getenv("UI_PASSWORD", "changeme")
+	basePath := strings.TrimRight(getenv("BASE_PATH", ""), "/")
+	if basePath != "" && !strings.HasPrefix(basePath, "/") {
+		basePath = "/" + basePath
+	}
 
 	caddyClient := caddy.New(caddyURL)
 
-	router := web.NewRouter(caddyClient, username, password)
+	router := web.NewRouter(caddyClient, username, password, basePath)
 
 	fmt.Printf("Caddy UI listening on %s  →  Caddy admin: %s\n", listenAddr, caddyURL)
 	if err := http.ListenAndServe(listenAddr, router); err != nil {

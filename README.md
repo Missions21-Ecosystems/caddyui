@@ -254,6 +254,7 @@ The **Stop Server** button in the sidebar sends `POST /stop` to gracefully shut 
 | `LISTEN_ADDR` | `:8080` | Address the UI listens on |
 | `UI_USERNAME` | `admin` | Basic auth username |
 | `UI_PASSWORD` | `changeme` | Basic auth password |
+| `BASE_PATH` | _(empty)_ | Browser-side path prefix when proxied under a sub-path (e.g. `/admin`) |
 
 ---
 

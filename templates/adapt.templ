@@ -236,7 +236,7 @@ templ AdaptPage(streamID string) {
 						<div class="toolbar toolbar--sm" style="margin-top:8px">
 							<button
 								class="btn btn-primary btn-sm"
-								data-on:click="@post('/api/adapt')"
+								data-on:click={ "@post('" + bp(ctx) + "/api/adapt')" }
 							>
 								Convert to JSON →
 							</button>
@@ -314,10 +314,10 @@ templ AdaptOutput(jsonStr string, warnings []string) {
 
 templ AdaptActions() {
 	<div id="adapt-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-		<button class="btn btn-secondary btn-sm" data-on:click="@post('/api/config/load')" title="Replaces the entire running config">
+		<button class="btn btn-secondary btn-sm" data-on:click={ "@post('" + bp(ctx) + "/api/config/load')" } title="Replaces the entire running config">
 			Load (replace all)
 		</button>
-		<button class="btn btn-ghost btn-sm" data-on:click="@post('/api/adapt/merge')" title="Appends new servers/routes onto the existing config without removing anything">
+		<button class="btn btn-ghost btn-sm" data-on:click={ "@post('" + bp(ctx) + "/api/adapt/merge')" } title="Appends new servers/routes onto the existing config without removing anything">
 			Merge into existing
 		</button>
 	</div>

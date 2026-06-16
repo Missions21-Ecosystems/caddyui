@@ -51,7 +51,7 @@ templ DashboardStats(summary caddy.ConfigSummary, upstreams []caddy.Upstream, on
 			}
 		}
 		<div class="action-row">
-			<button class="btn btn-secondary" data-on:click="@post('/api/dashboard/refresh')">
+			<button class="btn btn-secondary" data-on:click={ "@post('" + bp(ctx) + "/api/dashboard/refresh')" }>
 				↺ Refresh
 			</button>
 		</div>

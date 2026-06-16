@@ -13,12 +13,12 @@ templ ConfigPage(streamID string) {
 						placeholder="/apps/http"
 						data-bind:configpath
 					/>
-					<button class="btn btn-secondary btn-sm" data-on:click="@post('/api/config/get')">
+					<button class="btn btn-secondary btn-sm" data-on:click={ "@post('" + bp(ctx) + "/api/config/get')" }>
 						Fetch
 					</button>
 				</div>
 				<div class="toolbar-group">
-					<button class="btn btn-primary btn-sm" data-on:click="@post('/api/config/load')">
+					<button class="btn btn-primary btn-sm" data-on:click={ "@post('" + bp(ctx) + "/api/config/load')" }>
 						Load to Caddy
 					</button>
 					<button

@@ -45,7 +45,7 @@ templ ProxyContent(upstreams []caddy.Upstream) {
 			}
 		}
 		<div class="action-row">
-			<button class="btn btn-secondary" data-on:click="@post('/api/proxy/refresh')">↺ Refresh</button>
+			<button class="btn btn-secondary" data-on:click={ "@post('" + bp(ctx) + "/api/proxy/refresh')" }>↺ Refresh</button>
 		</div>
 	</div>
 }
